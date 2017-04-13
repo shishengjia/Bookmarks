@@ -60,12 +60,19 @@ class ImageDetailView(View):
 
 
 class ImageLikeView(View, LoginRequiredMixin):
+    """
+    图片点赞
+    处理用户点赞传过来的ajax请求
+    """
     def post(self, request):
+        # 是否登陆
         if not request.user.is_authenticated():
             form = LoginForm()
             return JsonResponse({'status': 'not login'})
+        # 获取图片ID和用户行为
         image_id = request.POST.get('id')
         action = request.POST.get('action')
+
         if image_id and action:
             try:
                 image = Image.objects.get(id=image_id)
@@ -81,18 +88,30 @@ class ImageLikeView(View, LoginRequiredMixin):
 
 
 class ImageListView(View):
+    """
+    For AJAX requests, we render the list_ajax.html template. This template
+    will only contain the images of the requested page.
+    
+    For standard requests, we render the list.html template. This template will
+    extend the base.html template to display the whole page and will include
+    the list_ajax.html template to include the list of images.  
+    """
     def get(self, request):
         images = Image.objects.all()
         paginator = Paginator(images, 8)
-        page = request.GET.get('page')
+        page = int(request.GET.get('page', 1))
         try:
             images = paginator.page(page)
         except EmptyPage:
+            # If this the case and the request is done via AJAX,
+            # we return an empty HttpResponse that will help us stop the AJAX pagination on the client side
             if request.is_ajax():
                 return HttpResponse('')
             images = paginator.page(paginator.num_pages)
+        # 如果是ajax请求，表示已经在列表页，用户在下拉网页，加载图片并返回
         if request.is_ajax():
-            return render(request, '', {'section': 'images',
-                                        'images': images})
-        return render(request, '', {'section': 'images',
+            return render(request, 'list_ajax.html', {'section': 'images',
+                                                      'images': images})
+        # 刚进入列表页，返回初始数据
+        return render(request, 'list.html', {'section': 'images',
                                     'images': images})
