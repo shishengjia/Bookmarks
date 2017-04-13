@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ image.title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ image.title }}</h1>
+    {% load thumbnail %}
+    {% thumbnail image.image "300" as im %}
+        <a href="{{ image.image.url }}">
+            <img src="{{ im.url }}" class="image-detail">
+        </a>
+    {% endthumbnail %}
+    {% with total_likes=image.users_like.count users_like=image.users_like.all %}
+        <div class="image-info">
+                <div>
+                    <span class="count">
+                        <span class="total">{{ total_likes }}</span>
+                        like{{ total_likes|pluralize }}
+                    </span>
+                    <a href="#" data-id="{{ image.id }}" data-action="{% if request.user in users_like %}un{% endif %}like" class="like button">
+                        {% if request.user not in users_like %}
+                            Like
+                        {% else %}
+                            Unlike
+                        {% endif %}
+                    </a>
+                </div>
+            {{ image.description|linebreaks }}
+        </div>
+
+        <div class="image-likes">
+            {% for user in image.users_like.all %}
+                <div>
+                    <img src="{{ user.photo.url }}">
+                    <p>{{ user.username }}</p>
+                </div>
+            {% empty %}
+                还没有人喜欢这张图片
+            {% endfor %}
+        </div>
+    {% endwith %}
+{% endblock %}
+
+{% block domready %}
+    $('a.like').click(function(e){
+        <!--avoid the default behavior of the <a> element. This will prevent from the link taking us anywhere.-->
+        e.preventDefault();
+        $.post('{% url "image:like" %}',
+            {
+                id: $(this).data('id'),
+                action: $(this).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('a.like').data('action');
+
+                    // toggle data-action
+                    $('a.like').data('action', previous_action == 'like' ? 'unlike' : 'like');
+                    // toggle link text
+                    $('a.like').text(previous_action == 'like' ? 'Unlike' : 'Like');
+
+                    // 取得点赞数
+                    var previous_likes = parseInt($('span.count .total').text());
+                    // 根据是否是'like'来判断点赞数是否加1
+                    $('span.count .total').text(previous_action == 'like' ? previous_likes + 1 : previous_likes - 1);
+                }
+                if (data['status'] == 'not login'){
+                    window.location.href="{% url 'users:login' %}"
+                }
+        });
+
+    });
+{% endblock %}

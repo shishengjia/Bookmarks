@@ -1,0 +1,68 @@
+{% load staticfiles %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %}</title>
+    <link href="{% static "css/base.css" %}" rel="stylesheet">
+</head>
+<body>
+    <div id="header">
+        <span class="logo">Bookmarks</span>
+        {% if request.user.is_authenticated %}
+        <ul class="menu">
+            <li {% if section == "dashboard" %}class="selected"{% endif %}><a href="{% url "index" %}">My dashboard</a></li>
+            <li {% if section == "images" %}class="selected"{% endif %}><a href="#">Images</a></li>
+            <li {% if section == "people" %}class="selected"{% endif %}><a href="#">People</a></li>
+        </ul>
+        {% endif %}
+        
+        <span class="user">
+        {% if request.user.is_authenticated %}
+            Hello {{ request.user.username }}, <a href="{% url "users:logout" %}">Logout</a>
+        {% else %}
+            <a href="{% url "users:login" %}">登陆</a>
+            <a href="{% url "users:register" %}">/ 注册</a>
+        {% endif %}
+        </span>
+    </div>
+    
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">
+                    {{ message|safe }}
+                    <a href="#" class="close">×</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <div id="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/jquery.cookie.js' %}"></script>
+    <script>
+    <!--网页全部加载后执行-->
+    $(document).ready(function(){
+        var csrftoken = $.cookie('csrftoken')
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            <!--check if the request method is safe and the current request is not cross-domain-->
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    <!--If the request is unsafe, we set the X-CSRFToken header with the value obtained from the cookie-->
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        {% block domready %}
+        {% endblock %}
+    });
+    </script>
+</body>
+</html>
