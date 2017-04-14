@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'image',
     'users',
     'sorl.thumbnail',
+    'action'
 ]
 
 MIDDLEWARE_CLASSES = [
