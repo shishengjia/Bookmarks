@@ -67,7 +67,6 @@ class ImageLikeView(View, LoginRequiredMixin):
     def post(self, request):
         # 是否登陆
         if not request.user.is_authenticated():
-            form = LoginForm()
             return JsonResponse({'status': 'not login'})
         # 获取图片ID和用户行为
         image_id = request.POST.get('id')
@@ -78,10 +77,9 @@ class ImageLikeView(View, LoginRequiredMixin):
                 image = Image.objects.get(id=image_id)
                 if action == 'like':
                     image.users_like.add(request.user)
-                    return JsonResponse({'status': 'ok'})
                 else:
                     image.users_like.remove(request.user)
-                    return JsonResponse({'status': 'ok'})
+                return JsonResponse({'status': 'ok'})
             except:
                 pass
         return JsonResponse({'status': 'ko'})
@@ -92,7 +90,7 @@ class ImageListView(View):
     For AJAX requests, we render the list_ajax.html template. This template
     will only contain the images of the requested page.
     
-    For standard requests, we render the list.html template. This template will
+    For standard requests, we render the user_list.html template. This template will
     extend the base.html template to display the whole page and will include
     the list_ajax.html template to include the list of images.  
     """

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load thumbnail %}
+
+{% block title %}{{ user.username }}{% endblock %}
+
+{% block content %}
+    <h1>{{ user.username }}</h1>
+    <div class="profile-info">
+    {% thumbnail user.photo "180x180" crop="100%" as im %}
+        <img src="{{ im.url }}" class="user-detail">
+    {% endthumbnail %}
+    </div>
+    {% with total_followers=user.get_follower_num %}
+        <span class="count">
+            <span class="total">{{ total_followers }}</span>
+            follower{{ total_followers|pluralize }}
+        </span>
+        <!--不是用户自身详情页，就显示follow图标-->
+        {% if not user == request.user %}
+        <a href="#" data-id="{{ user.id }}" data-action="{% if request.user in followers %}un{% endif %}follow" class="follow button">
+            {% if request.user not in followers %}
+                Follow
+            {% else %}
+                Unfollow
+            {% endif %}
+        </a>
+        {% endif %}
+        <div id="image-list" class="image-container">
+            {% include "list_ajax.html" with images=user.images_created.all %}
+        </div>
+    {% endwith %}
+{% endblock %}
+
+{% block domready %}
+    $('a.follow').click(function(e){
+        e.preventDefault();
+        $.post('{% url "users:follow" %}',
+            {
+                id: $(this).data('id'),
+                action: $(this).data('action')
+            },
+            function(data){
+                if (data['status'] == 'ok')
+                {
+                    var previous_action = $('a.follow').data('action');
+
+                    // toggle data-action
+                    $('a.follow').data('action', previous_action == 'follow' ? 'unfollow' : 'follow');
+                    // toggle link text
+                    $('a.follow').text(previous_action == 'follow' ? 'Unfollow' : 'Follow');
+
+                    // update total followers
+                    var previous_followers = parseInt($('span.count .total').text());
+                    $('span.count .total').text(previous_action == 'follow' ? previous_followers + 1 : previous_followers - 1);
+                }
+                if(data['status'] == 'not login'){
+                    window.location.href="{% url 'users:login' %}"
+                }
+        });
+    });
+{% endblock %}
