@@ -9,6 +9,8 @@ from django.views.decorators.http import require_POST
 
 from .forms import LoginForm, RegisterForm
 from .models import UserProfile, Contact
+from actions.utils import create_action
+from actions.models import Action
 
 
 class LoginView(View):
@@ -48,6 +50,7 @@ class RegisterView(View):
             new_user = form.save(commit=False)
             new_user.set_password(form.cleaned_data['password'])
             new_user.save()
+            create_action(new_user, 'has created an acccount')
             return render(request, 'register_done.html', {'new_user': new_user})
         return render(request, 'register.html', {'form': form})
 
@@ -63,8 +66,24 @@ class LogoutView(View):
 
 class DashBoardView(View):
     def get(self, request):
+        if not request.user.is_authenticated():
+            return render(request, 'dashboard.html', {
+                'section': 'dashboard'
+            })
+
+        actions = Action.objects.exclude(user=request.user)
+
+        # 用户所关注的用户ID
+        following_ids = [contact.user_to_id for contact in Contact.objects.filter(user_from=request.user)]
+
+        if following_ids:
+            action = actions.filter(user_id__in=following_ids)
+
+        actions = actions[:3]
+
         return render(request, 'dashboard.html', {
-            'section': 'dashboard'
+            'section': 'dashboard',
+            'actions': actions
         })
 
 
@@ -108,6 +127,7 @@ class UserFollowView(View):
                 if action == 'follow':
                     # 关注用户
                     Contact.objects.get_or_create(user_from=request.user, user_to=user)
+                    create_action(request.user, 'is following', user)
                 else:
                     # 取消关注
                     Contact.objects.filter(user_from=request.user, user_to=user).delete()

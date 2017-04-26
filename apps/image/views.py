@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect
 from django.views.generic import View
 from django.contrib import messages
-from .forms import ImageCreateForm
 from django.shortcuts import get_object_or_404
-from .models import Image
 from django.http import JsonResponse
 from utils.LoginJudge import LoginRequiredMixin
-from users.forms import LoginForm
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+from actions.utils import create_action
+from .forms import ImageCreateForm
+from .models import Image
+from users.forms import LoginForm
 
 
 class ImageCreatView(View):
@@ -77,11 +79,13 @@ class ImageLikeView(View, LoginRequiredMixin):
                 image = Image.objects.get(id=image_id)
                 if action == 'like':
                     image.users_like.add(request.user)
+                    create_action(request.user, 'likes', image)
                 else:
                     image.users_like.remove(request.user)
                 return JsonResponse({'status': 'ok'})
-            except:
-                pass
+            except Exception as e:
+                print(str(e))
+
         return JsonResponse({'status': 'ko'})
 
 

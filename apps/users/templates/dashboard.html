@@ -9,4 +9,13 @@
     {% endwith %}
     <p>Drag the following button to your bookmarks toolbar to bookmark
     images from other websites → <a href="javascript:{% include "bookmarklet_launcher.js" %}" class="button">Bookmark it</a><p>
+
+    <h2>最近发生了什么</h2>
+    <div id="action-list">
+        {% for action in actions %}
+            {% include 'action_detail.html' %}
+        {% empty %}
+            空空如也
+        {% endfor %}
+    </div>
 {% endblock %}
