@@ -9,7 +9,7 @@ class Action(models.Model):
     """
     记录用户的操作
     """
-    user = models.ForeignKey(UserProfile, related_name='actions', db_index=True)
+    user = models.ForeignKey(UserProfile, related_name='action', db_index=True)
     verb = models.CharField(max_length=255)
     target_ct = models.ForeignKey(ContentType,
                                   blank=True,

@@ -128,6 +128,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
 
+# 配置redis
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+
+
+
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MEDIA_URL = '/media/'

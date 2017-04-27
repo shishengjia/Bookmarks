@@ -6,11 +6,18 @@ from django.http import JsonResponse
 from utils.LoginJudge import LoginRequiredMixin
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.conf import settings
+import redis
 
 from actions.utils import create_action
 from .forms import ImageCreateForm
 from .models import Image
 from users.forms import LoginForm
+
+
+r = redis.StrictRedis(host=settings.REDIS_HOST,
+                      port=settings.REDIS_PORT,
+                      db=settings.REDIS_DB)
 
 
 class ImageCreatView(View):
@@ -51,14 +58,14 @@ class ImageDetailView(View):
     """
     def get(self, request, id):
         image = get_object_or_404(Image, id=id)
-        # has_fav = False
-        # users = image.users_like.all()
-        # if request.user in users:
-        #     has_fav = True
-        return render(request,
-                      'detail.html',
-                      {'section': 'images',
-                       'image': image})
+        # 第一次看访问量加1，否则不增加
+        # increase total image views by 1
+        total_views = r.incr('image:{}:views'.format(image.id))
+        return render(request, 'detail.html',{
+            'section': 'images',
+            'image': image,
+            'total_views': total_views
+        })
 
 
 class ImageLikeView(View, LoginRequiredMixin):

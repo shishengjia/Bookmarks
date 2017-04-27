@@ -12,6 +12,7 @@ class Image(models.Model):
     url = models.URLField()
     image = models.ImageField(upload_to='images/%Y/%m/%d')
     description = models.TextField(blank=True)
+    total_likes = models.PositiveIntegerField(db_index=True, default=0)
     created = models.DateField(auto_now_add=True, db_index=True)
 
     def __str__(self):
